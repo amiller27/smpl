@@ -73,7 +73,8 @@ bool AttachedBodiesCollisionModel::attachBody(
     const Affine3dVector& transforms,
     const std::string& link_name,
     bool create_voxels_model,
-    bool create_spheres_model)
+    bool create_spheres_model,
+    double sphere_radius)
 {
     if (hasAttachedBody(id)) {
         ROS_WARN_NAMED(ABM_LOGGER, "Already have attached body '%s'", id.c_str());
@@ -96,7 +97,11 @@ bool AttachedBodiesCollisionModel::attachBody(
     ab.link_index = m_model->linkIndex(link_name);
 
     if (create_spheres_model) {
-        ab.spheres_model = createSpheresModel(abidx, id, shapes, transforms);
+        ab.spheres_model = createSpheresModel(abidx,
+                                              id,
+                                              shapes,
+                                              transforms,
+                                              sphere_radius);
     } else {
         ab.spheres_model = nullptr;
     }
@@ -203,13 +208,14 @@ CollisionSpheresModel* AttachedBodiesCollisionModel::createSpheresModel(
     int abidx,
     const std::string& id,
     const std::vector<shapes::ShapeConstPtr>& shapes,
-    const Affine3dVector& transforms)
+    const Affine3dVector& transforms,
+    double sphere_radius)
 {
     ROS_DEBUG_NAMED(ABM_LOGGER, "  Generate spheres model");
 
     // create configuration spheres and a spheres model for this body
     CollisionSpheresModelConfig config;
-    generateSpheresModel(id, shapes, transforms, config);
+    generateSpheresModel(id, shapes, transforms, config, sphere_radius);
 
     // initialize a new spheres model
     m_spheres_models.emplace_back(new CollisionSpheresModel);
@@ -265,7 +271,8 @@ void AttachedBodiesCollisionModel::generateSpheresModel(
     const std::string& id,
     const std::vector<shapes::ShapeConstPtr>& shapes,
     const Affine3dVector& transforms,
-    CollisionSpheresModelConfig& spheres_model)
+    CollisionSpheresModelConfig& spheres_model,
+    double object_enclosing_sphere_radius)
 {
     assert(std::all_of(shapes.begin(), shapes.end(),
             [](const shapes::ShapeConstPtr& shape) { return (bool)shape; }));
@@ -276,9 +283,6 @@ void AttachedBodiesCollisionModel::generateSpheresModel(
     // TODO: reserve a special character so as to guarantee sphere uniqueness
     // here and disallow use of the special character on config-generated
     // spheres
-
-    // TODO: yeah...
-    const double object_enclosing_sphere_radius = 0.025;
 
     // voxelize the object
     std::vector<Eigen::Vector3d> voxels;

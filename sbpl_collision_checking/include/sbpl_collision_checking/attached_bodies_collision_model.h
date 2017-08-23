@@ -62,7 +62,8 @@ public:
         const Affine3dVector& transforms,
         const std::string& link_name,
         bool create_voxels_model = true,
-        bool create_spheres_model = true);
+        bool create_spheres_model = true,
+        double sphere_radius = 0.025);
     bool detachBody(const std::string& id);
 
     size_t attachedBodyCount() const;
@@ -143,7 +144,8 @@ private:
         int abidx,
         const std::string& id,
         const std::vector<shapes::ShapeConstPtr>& shapes,
-        const Affine3dVector& transforms);
+        const Affine3dVector& transforms,
+        double sphere_radius);
 
     CollisionVoxelsModel* createVoxelsModel(
         int abidx,
@@ -155,7 +157,8 @@ private:
         const std::string& id,
         const std::vector<shapes::ShapeConstPtr>& shapes,
         const Affine3dVector& transforms,
-        CollisionSpheresModelConfig& spheres_model);
+        CollisionSpheresModelConfig& spheres_model,
+        double object_enclosing_sphere_radius);
 
     void generateVoxelsModel(
         const std::string& id,

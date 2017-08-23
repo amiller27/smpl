@@ -292,7 +292,24 @@ bool CollisionSpace::processOctomapMsg(
 /// \param shapes The shapes composing the object
 /// \param transforms The pose of each shape with respect to the attached link
 /// \param link_name The link to attach the object to
+/// \param sphere_radius The radius of the spheres in the model
 /// \return true if the object was attached; false otherwise
+bool CollisionSpace::attachObject(
+    const std::string& id,
+    const std::vector<shapes::ShapeConstPtr>& shapes,
+    const Affine3dVector& transforms,
+    const std::string& link_name,
+    double sphere_radius)
+{
+    return m_abcm->attachBody(id,
+                              shapes,
+                              transforms,
+                              link_name,
+                              true,
+                              true,
+                              sphere_radius);
+}
+
 bool CollisionSpace::attachObject(
     const std::string& id,
     const std::vector<shapes::ShapeConstPtr>& shapes,

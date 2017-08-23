@@ -108,6 +108,13 @@ public:
         const Affine3dVector& transforms,
         const std::string& link_name);
 
+    bool attachObject(
+        const std::string& id,
+        const std::vector<shapes::ShapeConstPtr>& shapes,
+        const Affine3dVector& transforms,
+        const std::string& link_name,
+        double sphere_radius);
+
     bool detachObject(const std::string& id);
 
     bool processAttachedCollisionObject(
