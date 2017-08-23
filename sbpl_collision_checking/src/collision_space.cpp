@@ -398,9 +398,18 @@ visualization_msgs::MarkerArray
 CollisionSpace::getCollisionRobotVisualization() const
 {
     auto markers = m_rcs->getVisualization();
+
+    auto attached_markers = m_abcs->getVisualization(m_gidx);
+    markers.markers.reserve(markers.markers.size()
+                          + attached_markers.markers.size());
+    markers.markers.insert(markers.markers.end(),
+                           attached_markers.markers.begin(),
+                           attached_markers.markers.end());
+
     for (auto& m : markers.markers) {
         m.header.frame_id = getReferenceFrame();
     }
+
     return markers;
 }
 
@@ -415,9 +424,24 @@ CollisionSpace::getCollisionRobotVisualization(
         m_rcs->updateSphereStates(ssidx);
     }
     auto markers = m_rcs->getVisualization(m_gidx);
+
+    // Update the spheres for the attached bodies
+    for (const int ssidx : m_abcs->groupSpheresStateIndices(m_gidx)) {
+        m_abcs->updateSphereStates(ssidx);
+    }
+    auto attached_markers = m_abcs->getVisualization(m_gidx);
+
+    // Append attached body markers to marker list
+    markers.markers.reserve(markers.markers.size()
+                          + attached_markers.markers.size());
+    markers.markers.insert(markers.markers.end(),
+                           attached_markers.markers.begin(),
+                           attached_markers.markers.end());
+
     for (auto& m : markers.markers) {
         m.header.frame_id = m_grid->getReferenceFrame();
     }
+
     return markers;
 }
 
