@@ -41,13 +41,12 @@
 // system includes
 #include <kdl/chain.hpp>
 #include <kdl/chainfksolverpos_recursive.hpp>
-#include <kdl/chainiksolverpos_nr_jl.hpp>
-#include <kdl/chainiksolvervel_pinv.hpp>
 #include <kdl/frames.hpp>
 #include <kdl/jntarray.hpp>
 #include <kdl_parser/kdl_parser.hpp>
 #include <ros/console.h>
 #include <smpl/robot_model.h>
+#include <trac_ik/trac_ik.hpp>
 #include <urdf/model.h>
 
 namespace sbpl {
@@ -56,7 +55,8 @@ namespace motion {
 class KDLRobotModel :
     public virtual RobotModel,
     public virtual ForwardKinematicsInterface,
-    public virtual InverseKinematicsInterface
+    public virtual InverseKinematicsInterface,
+    public virtual RedundantManipulatorInterface
 {
 public:
 
@@ -89,11 +89,16 @@ public:
         const std::string& name,
         KDL::Frame& f);
 
+    /// \name Required Public Functions from RedundantManipulatorInterface
+    virtual const int redundantVariableCount() const override;
+    virtual const int redundantVariableIndex(int rvidx) const override;
+
     virtual bool computeFastIK(
         const std::vector<double>& pose,
         const std::vector<double>& start,
-        std::vector<double>& solution);
+        std::vector<double>& solution) override;
 
+    /// \brief Rando functions
     bool computeIKSearch(
         const std::vector<double>& pose,
         const std::vector<double>& start,
@@ -132,7 +137,7 @@ public:
     bool   hasPosLimit(int jidx) const override { return !continuous_[jidx]; }
     bool   isContinuous(int jidx) const override { return continuous_[jidx]; }
     double velLimit(int jidx) const override { return vel_limits_[jidx]; }
-    double accLimit(int jidx) const override { return 0.0; }
+    double accLimit(int /*jidx*/) const override { return 0.0; }
 
     bool checkJointLimits(
         const std::vector<double>& angles,
@@ -140,7 +145,7 @@ public:
 
     virtual bool computePlanningLinkFK(
         const std::vector<double>& angles,
-        std::vector<double>& pose);
+        std::vector<double>& pose) override;
     ///@}
 
     /// \name Required Public Functions from Extension
@@ -171,9 +176,8 @@ protected:
     KDL::JntArray jnt_pos_out_;
     KDL::Frame p_out_;
 
-    std::unique_ptr<KDL::ChainIkSolverPos_NR_JL>        ik_solver_;
-    std::unique_ptr<KDL::ChainIkSolverVel_pinv>         ik_vel_solver_;
-    std::unique_ptr<KDL::ChainFkSolverPos_recursive>    fk_solver_;
+    std::unique_ptr<TRAC_IK::TRAC_IK>                 ik_solver_;
+    std::unique_ptr<KDL::ChainFkSolverPos_recursive>  fk_solver_;
 
     std::vector<bool> continuous_;
     std::vector<double> min_limits_;

@@ -577,6 +577,15 @@ bool CollisionSpace::isStateToStateValid(
                 num_checks++;
                 interp.interpolate(j, interm, m_planning_joint_to_collision_model_indices);
                 if (!isStateValid(interm, verbose, false, dist_temp)) {
+                    ROS_ERROR("STATE INVALID");
+                    ROS_ERROR_STREAM("interm "
+                                   << interm[0] << " "
+                                   << interm[1] << " "
+                                   << interm[2] << " "
+                                   << interm[3] << " "
+                                   << interm[4] << " "
+                                   << interm[5] << " "
+                                   << interm[6]);
                     dist = dist_temp;
                     return false;
                 }
@@ -591,6 +600,15 @@ bool CollisionSpace::isStateToStateValid(
             num_checks++;
             interp.interpolate(i, interm, m_planning_joint_to_collision_model_indices);
             if (!isStateValid(interm, verbose, false, dist_temp)) {
+                ROS_ERROR("STATE INVALID 2");
+                    ROS_ERROR_STREAM("interm "
+                                   << interm[0] << " "
+                                   << interm[1] << " "
+                                   << interm[2] << " "
+                                   << interm[3] << " "
+                                   << interm[4] << " "
+                                   << interm[5] << " "
+                                   << interm[6]);
                 dist = dist_temp;
                 return false;
             }

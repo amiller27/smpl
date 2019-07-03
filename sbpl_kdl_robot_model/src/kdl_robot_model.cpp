@@ -47,7 +47,6 @@ namespace motion {
 KDLRobotModel::KDLRobotModel() :
     initialized_(false),
     ik_solver_(),
-    ik_vel_solver_(),
     fk_solver_()
 {
 }
@@ -136,12 +135,11 @@ bool KDLRobotModel::init(
         q_min(i) = min_limits_[i];
         q_max(i) = max_limits_[i];
     }
-    ik_vel_solver_.reset(new KDL::ChainIkSolverVel_pinv(kchain_));
 
-    const int max_iterations = 200;
-    const double kdl_eps = 0.001;
-    ik_solver_.reset(new KDL::ChainIkSolverPos_NR_JL(
-            kchain_, q_min, q_max, *fk_solver_, *ik_vel_solver_, max_iterations, kdl_eps));
+    const double trac_ik_timeout = 0.005;
+    const double trac_ik_eps = 0.001;
+    ik_solver_.reset(new TRAC_IK::TRAC_IK(
+            kchain_, q_min, q_max, trac_ik_timeout, trac_ik_eps));
 
     // joint name -> index mapping
     for (size_t i = 0; i < planning_joints_.size(); ++i) {
@@ -316,7 +314,8 @@ Extension* KDLRobotModel::getExtension(size_t class_code)
 {
     if (class_code == GetClassCode<RobotModel>() ||
         class_code == GetClassCode<ForwardKinematicsInterface>() ||
-        class_code == GetClassCode<InverseKinematicsInterface>())
+        class_code == GetClassCode<InverseKinematicsInterface>() ||
+        class_code == GetClassCode<RedundantManipulatorInterface>())
     {
         return this;
     }
@@ -359,7 +358,7 @@ bool KDLRobotModel::computeFK(
     normalizeAngles(jnt_pos_in_);
 
     KDL::Frame f1;
-    if (fk_solver_->JntToCart(jnt_pos_in_, f1, link_map_[name]) < 0) {
+    if (fk_solver_->JntToCart(jnt_pos_in_, f1, link_map_[name] + 1) < 0) {
         ROS_ERROR("JntToCart returned < 0.");
         return false;
     }
@@ -408,7 +407,7 @@ bool KDLRobotModel::computePlanningLinkFK(
     }
     normalizeAngles(jnt_pos_in_);
 
-    if (fk_solver_->JntToCart(jnt_pos_in_, f1, link_map_[planning_link_]) < 0) {
+    if (fk_solver_->JntToCart(jnt_pos_in_, f1, link_map_[planning_link_] + 1) < 0) {
         ROS_ERROR("JntToCart returned < 0.");
         return false;
     }
@@ -449,6 +448,20 @@ bool KDLRobotModel::computeIK(
         solutions.push_back(solution);
     }
     return solutions.size() > 0;
+}
+
+const int KDLRobotModel::redundantVariableCount() const
+{
+    return 1;
+}
+
+const int KDLRobotModel::redundantVariableIndex(int rvidx) const
+{
+    if (rvidx == 0) {
+        return free_angle_;
+    } else {
+        return -1;
+    }
 }
 
 bool KDLRobotModel::computeFastIK(
@@ -532,7 +545,7 @@ bool KDLRobotModel::computeIKSearch(
     double loop_time = 0;
     int count = 0;
 
-    int num_positive_increments = (int)((min_limits_[free_angle_] - initial_guess) / search_discretization_angle);
+    int num_positive_increments = (int)((max_limits_[free_angle_] - initial_guess) / search_discretization_angle);
     int num_negative_increments = (int)((initial_guess - min_limits_[free_angle_]) / search_discretization_angle);
     while (loop_time < timeout) {
         if (ik_solver_->CartToJnt(jnt_pos_in_, frame_des, jnt_pos_out_) >= 0) {

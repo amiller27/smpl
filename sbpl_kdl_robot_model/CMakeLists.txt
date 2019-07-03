@@ -10,6 +10,7 @@ find_package(catkin
         leatherman
         roscpp
         smpl
+        trac_ik_lib
         urdf)
 
 find_package(orocos_kdl REQUIRED)
@@ -23,6 +24,7 @@ catkin_package(
         leatherman
         roscpp
         smpl
+        trac_ik_lib
         urdf
     DEPENDS
         orocos_kdl)

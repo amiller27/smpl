@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(smpl)
 
-set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Debug)
 add_compile_options("-std=c++11")
 
 find_package(Boost REQUIRED)
@@ -39,7 +39,7 @@ catkin_package(
         Eigen
         sbpl)
 
-add_definitions(-DSBPL_VISUALIZE_MIN_SEVERITY=SBPL_VISUALIZE_SEVERITY_INFO)
+    add_definitions(-DSBPL_VISUALIZE_MIN_SEVERITY=SBPL_VISUALIZE_SEVERITY_INFO)
 
 include_directories(${Boost_INCLUDE_DIRS})
 include_directories(${Eigen_INCLUDE_DIRS})
